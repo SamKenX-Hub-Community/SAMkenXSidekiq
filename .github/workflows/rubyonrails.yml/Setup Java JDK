@@ -1,0 +1,103 @@
+# This workflow uses actions that are not certified by GitHub.  They are
+# provided by a third-party and are governed by separate terms of service,
+# privacy policy, and support documentation.
+#
+# This workflow will install a prebuilt Ruby version, install dependencies, and
+# run tests and linters.
+name: "Ruby on Rails CI"
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:11-alpine
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_DB: rails_test
+          POSTGRES_USER: rails
+          POSTGRES_PASSWORD: password
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: "postgres://rails:password@localhost:5432/rails_test"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      # Add or replace dependency steps here
+      - name: Install Ruby and gems
+        uses: ruby/setup-ruby@55283cc23133118229fd3f97f9336ee23a179fcf # v1.146.0
+        with:
+          bundler-cache: true
+      # Add or replace database setup steps here
+      - name: Set up database schema
+        run: bin/rails db:schema:load
+      # Add or replace test runners here
+      - name: Run tests
+        run: bin/rake
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install Ruby and gems
+        uses: ruby/setup-ruby@55283cc23133118229fd3f97f9336ee23a179fcf # v1.146.0
+        with:
+          bundler-cache: true
+      # Add or replace any other lints here
+      - name: Security audit dependencies
+        run: bin/bundler-audit --update
+      - name: Security audit application code
+        run: bin/brakeman -q -w2
+      - name: Lint Ruby files
+        run: bin/rubocop --parallel
+      - name: Setup Java JDK
+
+  uses: actions/setup-java@v1.4.4
+
+  with:
+
+    # The Java version to make available on the path. Takes a whole or semver Java version, or 1.x syntax (e.g. 1.8 => Java 8.x). Early access versions can be specified in the form of e.g. 14-ea, 14.0.0-ea, or 14.0.0-ea.28
+
+    java-version: 
+
+    # The package type (jre, jdk, jdk+fx)
+
+    java-package: # optional, default is jdk
+
+    # The architecture (x86, x64) of the package.
+
+    architecture: # optional, default is x64
+
+    # Path to where the compressed JDK is located. The path could be in your source repository or a local path on the agent.
+
+    jdkFile: # optional
+
+    # ID of the distributionManagement repository in the pom.xml file. Default is `github`
+
+    server-id: # optional, default is github
+
+    # Environment variable name for the username for authentication to the Apache Maven repository. Default is $GITHUB_ACTOR
+
+    server-username: # optional, default is GITHUB_ACTOR
+
+    # Environment variable name for password or token for authentication to the Apache Maven repository. Default is $GITHUB_TOKEN
+
+    server-password: # optional, default is GITHUB_TOKEN
+
+    # Path to where the settings.xml file will be written. Default is ~/.m2.
+
+    settings-path: # optional
+
+    # GPG private key to import. Default is empty string.
+
+    gpg-private-key: # optional
+
+    # Environment variable name for the GPG private key passphrase. Default is $GPG_PASSPHRASE.
+
+    gpg-passphrase: # optional
